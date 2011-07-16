@@ -1,0 +1,78 @@
+.\"Modified from man(1) of FreeBSD, the NetBSD mdoc.template, and mdoc.samples.
+.Dd July 30, 2007
+.An "Jouke Witteveen"
+.Os POSIX Compatible
+.Dt RESPOND 1
+\
+.Sh NAME
+.Nm respond
+.Nd automate response actions for events that are reported by a logging system (such as syslog).
+\
+.Sh SYNOPSIS
+.Nm
+.Fl a Ar FILE Op Fl p Ar FILE
+\
+.Sh DESCRIPTION
+.Nm
+listens on  stdin or on the named pipe specified by
+.Fl p
+and matches each line it reads to the regular expressions it finds in the actionscript specified by
+.Fl a .
+If a line matches,
+.Nm
+executes a rewritten command specified in the actionscript.
+\
+\
+.Sh OPTIONS
+.Bl -tag -width -indent
+.It Fl a Ar FILE
+Specifies the actionscript
+.Ar ( FILE )
+to read the actions (see below) from.
+.It Fl p Ar FILE
+Specifies the location
+.Ar ( FILE )
+of the named pipe.
+If the pipe does not exist it will be created for the running time of
+.Nm .
+For a discription of the creation of a named pipe see:
+.Xr mkfifo 1 .
+.Nm
+locks the directory of the pipe and processes relative paths in the actionscript as relative to this directory.
+.El
+\
+.Sh ACTIONSCRIPT SNTAX
+Each line in actionscript (unless commented with '#') specifies a regular expression/command pair, sepperated by whitespace.
+As a result of this syntax whitespace in the expression or the command needs to be commented by either preceeding it with '\\' or by placing it inside a quoted ('"') string.
+You need to escape '"' and '\\', even when they are within quotes.
+In addition to this the '$'-character has special behaviour inside the command. When not escaped $n will translate to the matched subexpression n (if existing) and $0 will be replaced by the entire match.
+Information on subexpressions as well as on the syntax used for the regular expressions is provided in a seperate manual
+.Xr ( re_format 7
+for the default regex library).
+\
+.Sh DIAGNOSTICS
+Although
+.Nm
+will detach from the terminal that calls it, it is as much a daemon as it has the "~d" suffix.
+This means that it does, for one thing, not drop privileges.
+This is really a feature and not a bug since it makes it possible to control multiple actionscripts for multiple users without the need of a configuration file.
+\
+.Sh TROUBLESHOOTING
+The most likely reason for
+.Nm
+to not start is a malformed actionscript.
+When a read error is reported be sure to triple check the syntax used in your actionscript.
+In some cases too long lines in the actionscript can also trigger a read error.
+.Pp
+A sudden dead of
+.Nm
+will probably be caused by a failure reading the named pipe. Normally though,
+.Nm
+quits when it receives a
+.Ar SIGINT
+or
+.Ar SIGTERM
+signall
+from
+.Xr kill 1 .
+.Pp
