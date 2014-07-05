@@ -4,7 +4,7 @@
 
 #ifndef _PROCESS_H
 #define _PROCESS_H
-#include <cstddef>
+#include <stddef.h>
 
 // Negatives make sure the codes for SIGINT and SIGTERM remain usable!
 #define OK			0
@@ -24,8 +24,8 @@
 
 void daemonize();
 // dirLock moves into the directory of a given file and strips it's path.
-int dirLock( char*& );
+int dirLock( char** );
 void setQuitHandlers();
-void quit( const int = 0 );
+void quit( const int );
 
 #endif /* _PROCESS_H */

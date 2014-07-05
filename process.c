@@ -4,26 +4,26 @@
  *  (c) 2007-2014 - Jouke Witteveen
  */
 
-#include <csignal>
-#include <iostream>
 #include <pthread.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include "process.h"
-#define	SHELL_PATH	"/bin/sh"	/* Path of the shell.  */
-#define	SHELL_NAME	"sh"		/* Name to give it.  */
+#ifndef SHELL_PATH
+#define SHELL_PATH	"/bin/sh"	/* Path of the shell. */
+#endif /* SHELL_PATH */
+#ifndef SHELL_NAME
+#define SHELL_NAME	"sh"	/* Name to give it. */
+#endif /* SHELL_NAME */
 
-using namespace std;
 typedef void* thread;
 typedef void* thread_arg;
 
 extern char* pipeFile;
-istream* cinp = &cin;
 struct threads_t {
-  threads_t() : num( 0 ){}
+  pthread_attr_t attr;
   unsigned int num;
-  pthread_attr_t* attr;
   pthread_t* id;
 } threads;
 
@@ -42,25 +42,29 @@ thread threadEnd(){
 } //threadEnd
 
 
-void threadsReserve( unsigned int num, unsigned int size ){
+int threadsReserve( unsigned int num, unsigned int size ){
+  if( pthread_attr_init( &threads.attr ) ) return -1;
   threads.num = num;
-  threads.id = new pthread_t[num];
-  threads.attr = new pthread_attr_t;
-  pthread_attr_init( threads.attr );
-  pthread_attr_setdetachstate( threads.attr, PTHREAD_CREATE_JOINABLE );
-  pthread_attr_setstacksize( threads.attr, size );
+  threads.id = malloc( num * sizeof( pthread_t ) );
+  if( !threads.id
+      || pthread_attr_setdetachstate( &threads.attr, PTHREAD_CREATE_JOINABLE )
+      || pthread_attr_setstacksize( &threads.attr, size ) ){
+    pthread_attr_destroy( &threads.attr );
+    return -1;
+  }
+  return 0;
 } //threadsReserve
 
 
 void threadStart( int id, thread ( *func )( thread_arg ), thread_arg arg ){
-  if( pthread_create( &threads.id[id], threads.attr, func, arg ) != 0 )
+  if( pthread_create( &threads.id[id], &threads.attr, func, arg ) != 0 )
     quit( THREADC );
 } //threadStart
 
 
 void threadsWait(){
-  for( unsigned int i = 0; i < threads.num; ++i )
-    pthread_join( threads.id[i], NULL );
+  unsigned int i;
+  for( i = 0; i < threads.num; ++i ) pthread_join( threads.id[i], NULL );
 } //threadsWait
 
 
@@ -83,16 +87,18 @@ void daemonize(){
 } //daemonize
 
 
-int dirLock( char*& filePath ){
-  char* dir = filePath;
-  for( char* i = filePath; *i; ++i ) if( *i == '/' ) filePath = i + 1;
+int dirLock( char** filePath ){
+  char *dir = *filePath, *pos = *filePath;
+  int rv;
+  while( *pos ) if( *pos++ == '/' ) *filePath = pos;
 
-  if( dir == filePath ) return 0; //filePath contains no directories
+  if( dir == *filePath ) return 0; //filePath contains no directories
 
-  char c = *filePath;
-  *filePath = '\0'; //terminates dir
-  int rv = chdir( dir );
-  *filePath = c; //restore first letter of filename
+  *pos = **filePath;
+  **filePath = '\0'; //terminates dir
+  rv = chdir( dir );
+  **filePath = *pos; //restore first letter of filename
+  *pos = '\0';
   return rv;
 } //dirLock
 
@@ -107,46 +113,46 @@ void quit( const int cause ){
   int rv = 1;
   switch( cause ){
     case SYNTAX:
-      cerr << "syntax error" << endl;
+      fputs( "syntax error\n", stderr );
       // continue to display help
     case HELP:
-      if( cause == HELP ) rv = 0;
-      cout << "Usage: respond -a actionscript [ -p named_pipe ]" << endl;
+      if( cause == HELP ) rv = EXIT_SUCCESS;
+      puts( "Usage: respond -a actionscript [ -p named_pipe ]" );
       goto end;
-    case 0:
+    case OK:
     case SIGINT:
     case SIGTERM:
-      rv = 0;
+      rv = EXIT_SUCCESS;
       break;
     case DAEMONIZE:
-      rv = 0;
+      rv = EXIT_SUCCESS;
       goto end;
     case EXEC:
-      cerr << "error executing another program" << endl;
-      _exit( 1 );
+      fputs( "error executing another program\n", stderr );
+      _exit( EXIT_FAILURE );
     case FILER:
-      cerr << "error reading file" << endl;
+      fputs( "error reading actionscript\n", stderr );
       break;
     case FORK:
-      cerr << "error while forking" << endl;
+      fputs( "error while forking\n", stderr );
       break;
     case NOACT:
-      cerr << "error: no actions defined" << endl;
+      fputs( "error: no actions defined\n", stderr );
       break;
     case PIPEC:
-      cerr << "error creating named pipe" << endl;
+      fputs( "error creating named pipe\n", stderr );
       goto end;
     case PIPER:
-      cerr << "lost connection to pipe" << endl;
+      fputs( "lost connection to pipe\n", stderr );
       break;
     case PIPET:
-      cerr << "error: specified named pipe is not a pipe" << endl;
+      fputs( "error: specified named pipe is not a pipe\n", stderr );
       break;
     case THREADC:
-      cerr << "error creating thread" << endl;
+      fputs( "error creating thread\n", stderr );
       break;
     default:
-      cerr << "unknown error: " << cause << endl;
+      fprintf( stderr, "unknown error: %i\n", cause );
       break;
   } //switch
 
