@@ -1,7 +1,7 @@
 /*
  *  See: respond.h
  *
- *  (c) 2007, 2008 - Jouke Witteveen
+ *  (c) 2007-2014 - Jouke Witteveen
  */
 
 #include <fstream>

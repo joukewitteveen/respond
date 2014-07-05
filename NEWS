@@ -1,0 +1,10 @@
+respond 1.2 (2008, January)
+ - FreeBSD port available
+ - Code style improvements/bugfixes
+
+respond 1.1 (2007, August)
+ - Support for reading from stdin
+ - Bugfixes
+
+respond 1.0 (2007, August)
+ - Initial release

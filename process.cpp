@@ -1,7 +1,7 @@
 /*
  *  See: process.h
  *
- *  (c) 2007, 2008 - Jouke Witteveen
+ *  (c) 2007-2014 - Jouke Witteveen
  */
 
 #include <csignal>
@@ -152,7 +152,7 @@ void quit( const int cause ){
 
   threadsWait();
   if( pipeFile ) unlink( pipeFile );
-  
+
   end:
   exit( rv );
 } //quit

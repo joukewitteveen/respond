@@ -2,22 +2,7 @@
  * Respond is an easy way to act upon situations that are reported by a logging
  * system (such as Syslog).
  *
- * (c) 2007, 2008 - Jouke Witteveen
- * Inherited licences from the includes apply.
- * Don't redistribute in any way, shape or form without explicitly naming the
- * author(s) and noting the changes from the original.
- *
- *
- *    Changelog
- *
- * 1.2 (2008, January)
- *  - FreeBSD port available
- *  - Code style improvements/bugfixes
- * 1.1 (2007, August)
- *  - Support for reading from stdin
- *  - Bugfixes
- * 1.0 (2007, August)
- *  - Initial release
+ * (c) 2007-2014 - Jouke Witteveen
  */
 
 #include "process.h"
@@ -65,7 +50,7 @@ int main( int argc, char* const argv[] ) {
     if( preparePipe( pipePath ) < 0 ) quit( pipeFile ? PIPEC : PIPET );
     daemonize();
     if( dirLock( pipePath ) < 0 ) quit( DIRLOCK );
-    if( pipeFile ) pipeFile = pipePath;    
+    if( pipeFile ) pipeFile = pipePath;
   } //if
 
   /***   listen on pipe   ***/

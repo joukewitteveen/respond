@@ -1,0 +1,16 @@
+respond
+(c) 2007-2014 - Jouke Witteveen
+
+
+Installation of respond is done through make.
+The following targets are defined:
+ - all (default)
+	This does the actual compiling.
+ - install
+	Installs respond. It will also compile anything not yet compiled.
+ - uninstall
+	Removes all installed files. Use the same parameters used with install!
+ - clean
+	Removes all traces from compilation.
+
+Expert options can be set in the Makefile.
